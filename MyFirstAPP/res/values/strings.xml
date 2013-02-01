@@ -1,0 +1,9 @@
+<resources>
+
+    <string name="app_name">MyFirstApp</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">最初のAPP</string>
+    <string name="text01">このテキストはAndroidResourcesに\n定義されています</string>
+
+</resources>
