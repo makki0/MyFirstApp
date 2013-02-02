@@ -52,6 +52,9 @@ public final class R {
     }
     public static final class raw {
         public static final int se_maoudamashii_se_door04=0x7f040000;
+        public static final int sm1up=0x7f040001;
+        public static final int smdead=0x7f040002;
+        public static final int tw044=0x7f040003;
     }
     public static final class string {
         public static final int app_name=0x7f060000;

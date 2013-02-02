@@ -32,7 +32,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
 	class FirstThread extends Thread {
 
-		public static final int FLAMES_PAR_SECOND = 60;							// 1秒あたりのフレーム数
+		public static final int FLAMES_PAR_SECOND = 120;							// 1秒あたりのフレーム数
 		public static final int MILLIS_PAR_FLAME = 1000 / FLAMES_PAR_SECOND;	// 1フレームの秒数
 
 
@@ -48,6 +48,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
     	Bitmap panel3 = BitmapFactory.decodeResource(res, R.drawable.panel_3);
     	Bitmap panel4 = BitmapFactory.decodeResource(res, R.drawable.panel_4);
     	Bitmap panel5 = BitmapFactory.decodeResource(res, R.drawable.panel_5);
+		Bitmap b_goal = BitmapFactory.decodeResource(res, R.drawable.goal);
 
     	Bitmap b_charactor = BitmapFactory.decodeResource(res, R.drawable.charactor);
     	Bitmap b_charactor_dead = BitmapFactory.decodeResource(res, R.drawable.charactor_dead);
@@ -59,7 +60,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
 		public final int TopLoc = (int)(60.0 * dip);				// 第1パネルを設置する上からの距離
 		public final int LeftLoc = (int)(12.0 * dip);				// 第1パネルを設置する左からの距離
 
-		public int VelofPanel = (int)(600.0 * dip);					// パネルスライドの速度
+		public int VelofPanel = (int)(800.0 * dip);					// パネルスライドの速度
 		public int VelofChara = (int)(10.0 * dip);					// キャラクター移動速度
 
 		
@@ -79,7 +80,11 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
         /** サウンドを鳴らしても良いか */
         private boolean soundFlg;
 
+		private MediaPlayer mBgmPlayer;
+		
 		private int seId;
+		private int seId2;
+		private int seId3;
 		private SoundPool sp;
 
 		// あいてるとこ
@@ -122,9 +127,6 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
             holder = surfaceHolder;
             mContext = context;
 
-            // 初期化処理
-            init();
-            
         	// AudioManagerオブジェクトを取得
         	AudioManager audioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
         	// 着信音モードを取得
@@ -142,81 +144,102 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
         	    break;
         	}
 
+			mBgmPlayer = MediaPlayer.create(mContext,R.raw.tw044);
+			mBgmPlayer.setLooping(true);
+			mBgmPlayer.start();
+			
     		sp = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
     		seId = sp.load(mContext.getApplicationContext(), R.raw.se_maoudamashii_se_door04, 1);
+			seId2 = sp.load(mContext.getApplicationContext(), R.raw.sm1up, 1);
+			seId3 = sp.load(mContext.getApplicationContext(),R.raw.smdead, 1);
+
+            // 初期化処理
+            init();
+            
         }
+		
+		public void stopBgm() {
+			mBgmPlayer.stop();
+		}
 
         public void init (){
 
-            // 最初に3秒物理計算をウエイト
-            mLastTime = System.currentTimeMillis() + 3000;
-            
-            mPastTime = 0;
-            
-            // ゲーム状態を開始に
-            gameStat = 1;
-            
-            // レールパネルの設定
-        	rpArray = new RailPanel[15];
-        	
-        	// パネルをランダムにするためにランダム配列を生成
-        	int rndPanel[] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-        	int n = 0;
-        	// 0番目だけは、垂直レールが来るようにしておく
-        	for ( int i = 1; i < rndPanel.length - 1; ++i ) {
-        		n = (int)(Math.random() * (rndPanel.length -1 - i));
-        		int tmp = rndPanel[i];
-        		rndPanel[i] = rndPanel[i + n];
-        		rndPanel[i + n] = tmp;
-        	}
-        	
-        	// レールパネルの実体生成
-        	for ( int i = 0; i < rpArray.length; ++i ) {
-        		rpArray[i] = new RailPanel();
-        	}
-        	for ( int i = 0; i < rpArray.length; ++i ) {
-        		Log.d("TEST", "FirstThred [rnd = " + rndPanel[i]);
-        		rpArray[rndPanel[i]].setNow_posision(rndPanel[i]);
-        		rpArray[rndPanel[i]].setMynumber(i);
-        		if (i < 3) {
-            		rpArray[rndPanel[i]].setImg(panel1);
-            		rpArray[rndPanel[i]].setMylailstyle(1);
-        		} else if (i < 6) {
-        			rpArray[rndPanel[i]].setImg(panel2);
-            		rpArray[rndPanel[i]].setMylailstyle(2);
-        		} else if (i < 9) {
-        			rpArray[rndPanel[i]].setImg(panel3);
-            		rpArray[rndPanel[i]].setMylailstyle(3);
-        		} else if (i < 12) {
-        			rpArray[rndPanel[i]].setImg(panel4);
-            		rpArray[rndPanel[i]].setMylailstyle(4);
-        		} else {
-        			rpArray[rndPanel[i]].setImg(panel5);
-            		rpArray[rndPanel[i]].setMylailstyle(5);
-        		}
-        		int xxx = (int)(LeftLoc + (i % 4) * SizeofPanelImage);
-        		int yyy = (int)(TopLoc + (i / 4) * SizeofPanelImage);
-        		rpArray[i].setX_pos(xxx);
-        		rpArray[i].setY_pos(yyy);
-        		rpArray[i].setX_vel(0);
-        		rpArray[i].setY_vel(0);
-        	}
-    		space_point = 15;
-    		moving_panel_number = -1;
-			curvetime = 0;
+			synchronized(holder){
+				// 最初に3秒物理計算をウエイト
+				mLastTime = System.currentTimeMillis() + 100;
 
-			
-    		// 主人公の設定
-    		chara = new RailPanel();
-    		chara.setImg(b_charactor);
-    		chara.setX_pos(LeftLoc + (SizeofPanelImage / 2) - (b_charactor.getWidth() / 2));
-    		chara.setY_pos(TopLoc - (b_charactor.getHeight() / 2));
-    		chara.setX_vel(0);
-    		chara.setY_vel(VelofChara);
-    		charaPos = 0;
-    		chara.setDirection(2);
-    		chara.setMylailstyle(rpArray[getRailPanelbyPos(0)].getMylailstyle());
-    		Log.d("TEST", "chara style " + chara.getMylailstyle());
+				mPastTime = 0;
+
+				// ゲーム状態を開始に
+				gameStat = 1;
+
+				// レールパネルの設定
+				rpArray = new RailPanel[15];
+
+				// パネルをランダムにするためにランダム配列を生成
+				int rndPanel[] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+				int n = 0;
+				// 0番目だけは、垂直レールが来るようにしておく
+				for ( int i = 1; i < rndPanel.length - 1; ++i ) {
+					n = (int)(Math.random() * (rndPanel.length -1 - i));
+					int tmp = rndPanel[i];
+					rndPanel[i] = rndPanel[i + n];
+					rndPanel[i + n] = tmp;
+				}
+
+				// レールパネルの実体生成
+				for ( int i = 0; i < rpArray.length; ++i ) {
+					rpArray[i] = new RailPanel();
+				}
+				for ( int i = 0; i < rpArray.length; ++i ) {
+					Log.d("TEST", "FirstThred [rnd = " + rndPanel[i]);
+					rpArray[rndPanel[i]].setNow_posision(rndPanel[i]);
+					rpArray[rndPanel[i]].setMynumber(i);
+					if (i < 3) {
+						rpArray[rndPanel[i]].setImg(panel1);
+						rpArray[rndPanel[i]].setMylailstyle(1);
+					} else if (i < 6) {
+						rpArray[rndPanel[i]].setImg(panel2);
+						rpArray[rndPanel[i]].setMylailstyle(2);
+					} else if (i < 9) {
+						rpArray[rndPanel[i]].setImg(panel3);
+						rpArray[rndPanel[i]].setMylailstyle(3);
+					} else if (i < 12) {
+						rpArray[rndPanel[i]].setImg(panel4);
+						rpArray[rndPanel[i]].setMylailstyle(4);
+					} else {
+						rpArray[rndPanel[i]].setImg(panel5);
+						rpArray[rndPanel[i]].setMylailstyle(5);
+					}
+					int xxx = (int)(LeftLoc + (i % 4) * SizeofPanelImage);
+					int yyy = (int)(TopLoc + (i / 4) * SizeofPanelImage);
+					rpArray[i].setX_pos(xxx);
+					rpArray[i].setY_pos(yyy);
+					rpArray[i].setX_vel(0);
+					rpArray[i].setY_vel(0);
+				}
+				space_point = 15;
+				moving_panel_number = -1;
+				curvetime = 0;
+
+
+				// 主人公の設定
+				chara = new RailPanel();
+				chara.setImg(b_charactor);
+				chara.setX_pos(LeftLoc + (SizeofPanelImage / 2) - (b_charactor.getWidth() / 2));
+				chara.setY_pos(TopLoc - (b_charactor.getHeight() / 2));
+				chara.setX_vel(0);
+				chara.setY_vel(VelofChara);
+				charaPos = 0;
+				chara.setDirection(2);
+				chara.setMylailstyle(rpArray[getRailPanelbyPos(0)].getMylailstyle());
+				Log.d("TEST", "chara style " + chara.getMylailstyle());
+				
+				if (mBgmPlayer.isPlaying() != true){
+					mBgmPlayer.start();
+				}
+			}
+            
 
         }
         
@@ -275,7 +298,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
          */
         private void ring_se(int resId) {
         	if (soundFlg) {
-        		sp.play(seId, 1.0F, 1.0F, 0, 0, 1.0F);
+        		sp.play(resId, 1.0F, 1.0F, 0, 0, 1.0F);
         	}
         }
 
@@ -335,7 +358,12 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
         	            }
             			culculate_state();
             			doDrow(c);
-/*            		    holder.unlockCanvasAndPost(c);*/
+						/*            		    holder.unlockCanvasAndPost(c);*/
+						if (gameStat == 0 && mBgmPlayer.isPlaying()){
+							mBgmPlayer.pause();
+							mBgmPlayer.seekTo(0);
+							ring_se(seId3);
+						}
     				}
     		    } catch(Exception e) {
     		    	ErrorDialog(e);
@@ -437,6 +465,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
             
             // 主人公の移動
             if (gameStat == 1){
+				if ( mPastTime < 3000 ) return;
                 double cYv = chara.getY_vel();
                 double cXv = chara.getX_vel();
                 double cYp = chara.getY_pos();
@@ -563,6 +592,12 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
                 //パネルまたぎの時
     			if (chara.getDirection() == 2) {		// 上から下
             		if ( cYp + (chara.getImg().getHeight() / 2) > (TopLoc + ((charaPos / 4) + 1) * SizeofPanelImage)) {
+						// Goal check
+						if ( charaPos == 15 ){
+							gameStat = 2;
+							ring_se(seId2);
+							return;
+						}
     					// パネルをまたぐときはカーブ終了とみなす
             			curvetime = 0;
     					curvestat = 9;
@@ -721,20 +756,33 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
 			float scale = (float)320 * dip / (float)box.getHeight();
 			matx.postScale(scale,scale);
             Bitmap tmp_Bitmap;
+			// Draw white screen
 		    c.drawColor(Color.WHITE);
+			// Draw frame
 		    tmp_Bitmap = Bitmap.createBitmap(box, 0, 0, box.getWidth(), box.getHeight(), matx, true);
 		    c.drawBitmap(tmp_Bitmap, 0, TopLoc - 12 * dip, paint);
+			// Draw goal
+			tmp_Bitmap = Bitmap.createBitmap(b_goal, 0, 0, b_goal.getWidth(), b_goal.getHeight(), matx, true);
+			c.drawBitmap(tmp_Bitmap, (LeftLoc + SizeofPanelImage * 3), (TopLoc + SizeofPanelImage * 4), paint);
+			
+			// Draw panel
 		    for ( int i = 0; i < rpArray.length; ++i ) {
 			    tmp_Bitmap = Bitmap.createBitmap(rpArray[i].getImg(), 0, 0, 
 			    		rpArray[i].getImg().getWidth(), rpArray[i].getImg().getHeight(), matx, true);
 			    c.drawBitmap(tmp_Bitmap, (int)rpArray[i].getX_pos(), (int)rpArray[i].getY_pos(), paint);
 		    }
+			// Draw charactor
 		    if (gameStat != 0) tmp_Bitmap = Bitmap.createBitmap(b_charactor, 0, 0, 
 		    		b_charactor.getWidth(), b_charactor.getHeight(), matx, true);
 		    else tmp_Bitmap = Bitmap.createBitmap(b_charactor_dead, 0, 0, 
 		    		b_charactor.getWidth(), b_charactor.getHeight(), matx, true);
 		    c.drawBitmap(tmp_Bitmap, (int)chara.getX_pos(), (int)chara.getY_pos(), paint);
-		    c.drawText("スコア： " + ((int)mPastTime / 1000) * 100, 10 * dip, 30 * dip, paintScore);
+			// Draw score
+			if ( gameStat == 2 ) {
+		        c.drawText("ゴール！！ " + ((int)mPastTime / 1000) * 100, 10 * dip, 30 * dip, paintScore);
+		    } else {
+				c.drawText("スコア： " + ((int)mPastTime / 1000) * 100, 10 * dip, 30 * dip, paintScore);
+			}
         }
 
         /**
@@ -758,6 +806,9 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
         		// パネル移動中は処理を抜ける
         		if (moving_panel_number >= 0) return true;
 
+				if (gameStat != 1){
+					return true;
+				}
         		if (Math.abs(velocityX) > Math.abs(velocityY)){
         			if (velocityX > 0){		// 左から右
         				if (space_point % 4 != 0){
@@ -806,7 +857,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
         		}
         		if (moving_panel_number >= 0) {
                 	// パネル移動サウンド
-        			ring_se(R.raw.se_maoudamashii_se_door04);
+        			ring_se(seId);
         		}
 
         		return true;
@@ -939,6 +990,7 @@ public class  FirstSurfaceView extends SurfaceView implements SurfaceHolder.Call
 		Log.d("TEST", "surfaceDestroyed");
 
 		//thread.pause();
+		thread.stopBgm();
 		thread.setInBackground(true);
 
 //    	// スレッドに終了を通知し、その処理が終了するまで待つ。
